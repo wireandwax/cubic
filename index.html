@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cube Sequencer</title>
+  <link rel="stylesheet" href="style.css">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <div>
+      <p>SPATIAL INSTRUMENT / 001</p>
+      <h1>CUBIC <span>/</span> </h1>
+    </div>
+    <div id="status">READY</div>
+  </header>
+
+  <main>
+    <section id="scene">
+      <div class="hint">CLICK CUBELETS TO TOGGLE EVENTS · DRAG TO ORBIT</div>
+      
+    </section>
+
+    <aside>
+      <p class="label">TRANSPORT</p>
+      <div class="buttons">
+        <button id="playBtn">▶ PLAY</button>
+        <button id="stopBtn">■ STOP</button>
+      </div>
+
+      <label for="tempo">TEMPO <span><b id="tempoValue">450</b> BPM</span></label>
+      <input id="tempo" type="range" min="60" max="500" value="450">
+
+
+      <label for="displacement">DISPLACEMENT <span><b id="displacementValue">0</b></span></label>
+      <input id="displacement" type="range" min="0" max="10" value="0">
+
+      
+
+      
+      <hr>
+
+      <p class="label">PATTERN</p>
+      <p>Active events: <strong id="eventCount">0</strong></p>
+      <p>Current step: <strong id="stepCount">—</strong></p>
+
+      <div class="buttons">
+        <button id="randomBtn">RANDOMISE</button>
+        <button id="clearBtn">CLEAR</button>
+      </div>
+    
+      <hr>
+
+    </aside>
+  </main>
+
+  <footer>WEB AUDIO SYNTHESIS · EXPERIMENTAL SEQUENCER</footer>
+<div id="sampleControls">
+  <h3>INSTRUMENT SAMPLES</h3>
+
+  <label>KICK
+    <input type="file" id="sample0" accept="audio/*">
+    <button type="button" id="preview0">Preview</button>
+    <span id="sampleStatus0">No sample loaded</span>
+  </label>
+
+  <label>SNARE
+    <input type="file" id="sample1" accept="audio/*">
+    <button type="button" id="preview1">Preview</button>
+    <span id="sampleStatus1">No sample loaded</span>
+  </label>
+
+  <label>HI-HAT
+    <input type="file" id="sample2" accept="audio/*">
+    <button type="button" id="preview2">Preview</button>
+    <span id="sampleStatus2">No sample loaded</span>
+  </label>
+
+  <label>SYNTH
+    <input type="file" id="sample3" accept="audio/*">
+    <button type="button" id="preview3">Preview</button>
+    <span id="sampleStatus3">No sample loaded</span>
+  </label>
+
+  <label>HIGH CLICK
+    <input type="file" id="sample4" accept="audio/*">
+    <button type="button" id="preview4">Preview</button>
+    <span id="sampleStatus4">No sample loaded</span>
+  </label>
+
+  <label>LOW TOM
+    <input type="file" id="sample5" accept="audio/*">
+    <button type="button" id="preview5">Preview</button>
+    <span id="sampleStatus5">No sample loaded</span>
+  </label>
+</div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

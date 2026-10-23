@@ -1,0 +1,312 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #090b0e;
+  --panel: #11151a;
+  --line: #293039;
+  --text: #e8edf2;
+  --muted: #818b97;
+  --green: #c6ff4d;
+  --cyan: #45e6e6;
+  --pink: #ff5f9e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 32px;
+  border-bottom: 1px solid var(--line);
+}
+
+header p,
+.label,
+.hint,
+footer {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+
+header p {
+  margin: 0 0 7px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 34px);
+  letter-spacing: -1.5px;
+}
+
+h1 span {
+  color: var(--green);
+}
+
+#status {
+  color: var(--green);
+  font: 11px 'Space Mono', monospace;
+  letter-spacing: 1px;
+}
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  min-height: 590px;
+}
+
+#scene {
+  position: relative;
+  min-width: 0;
+  min-height: 590px;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  
+}
+
+#scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hint {
+  position: absolute;
+  z-index: 1;
+  top: 20px;
+  left: 22px;
+  pointer-events: none;
+}
+
+aside {
+  padding: 26px 22px;
+  background: var(--panel);
+}
+
+.label {
+  margin: 0 0 16px;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 25px;
+}
+
+button {
+  flex: 1;
+  padding: 12px 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: 10px 'Space Mono', monospace;
+  cursor: pointer;
+  transition: background 150ms, color 150ms, border-color 150ms;
+}
+
+button:hover {
+  border-color: var(--green);
+}
+
+#playBtn {
+  background: var(--green);
+  border-color: var(--green);
+  color: #10130b;
+  font-weight: 700;
+}
+
+#playBtn:hover {
+  background: #ddff9a;
+}
+
+label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  font: 10px 'Space Mono', monospace;
+  letter-spacing: 1px;
+}
+
+label span {
+  color: var(--muted);
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 0 0 26px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0 0 24px;
+}
+
+aside > p:not(.label) {
+  font-size: 12px;
+  color: #aeb7c1;
+}
+
+aside strong {
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+}
+
+.x {
+  color: var(--green);
+}
+
+.y {
+  color: var(--cyan);
+}
+
+.z {
+  color: var(--pink);
+}
+
+footer {
+  padding: 18px 32px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 760px) {
+  header {
+    padding: 20px;
+  }
+
+  main {
+    grid-template-columns: 1fr;
+  }
+
+  #scene {
+    min-height: 430px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  aside {
+    padding: 24px 20px;
+  }
+
+  footer {
+    padding: 16px 20px;
+  }
+}/* ----------------------------------
+   INSTRUMENT SAMPLE FOOTER
+---------------------------------- */
+
+#sampleControls {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+
+  padding: 14px 20px 16px;
+
+  background: rgba(8, 10, 15, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+
+  color: #fff;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+#sampleControls h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 2px;
+
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#sampleControls label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: 0;
+
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+#sampleControls input[type="file"] {
+  width: 100%;
+  min-width: 0;
+  font-size: 10px;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#sampleControls input[type="file"]::file-selector-button {
+  padding: 5px 8px;
+  margin-right: 6px;
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+#sampleControls button {
+  padding: 5px 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  background: transparent;
+  color: #fff;
+
+  font: inherit;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+#sampleControls button:hover,
+#sampleControls input[type="file"]::file-selector-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#sampleControls span {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 10px;
+  letter-spacing: 0;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Smaller screens */
+@media (max-width: 800px) {
+  #sampleControls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+}
