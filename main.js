@@ -97,7 +97,7 @@ dotGeometry.setAttribute(
 
 
 const dotMaterial = new THREE.PointsMaterial({
-  size: 0.2,
+  size: 0.3,
   vertexColors: true,
   transparent: true,
   opacity: 0.03,
@@ -188,7 +188,7 @@ const faceColours = {
   back:   '#45e6e6',
   right:  '#ff78db',
   left:   '#ac63ff',
-  top:    '#ffb347',
+  top:    '#ffa323',
   bottom: '#5b9dff'
 };
 
@@ -277,6 +277,88 @@ function createFaceNumber(number) {
     material
   );
 }
+
+
+function fadeLayerNumbers(layer, targetOpacity, duration = 120) {
+  const layerSet = new Set(layer);
+
+  const labels = [];
+
+  scene.traverse(object => {
+    if (
+      object.userData.cubelet &&
+      layerSet.has(object.userData.cubelet) &&
+      object.userData.displayedNumber !== undefined
+    ) {
+      labels.push(object);
+    }
+  });
+
+  const startOpacities = labels.map(
+    label => label.material.opacity
+  );
+
+  const startTime = performance.now();
+
+  return new Promise(resolve => {
+    function animateFade(now) {
+      const progress = Math.min(
+        (now - startTime) / duration,
+        1
+      );
+
+      const eased = progress * progress * (3 - 2 * progress);
+
+      labels.forEach((label, index) => {
+        label.material.opacity =
+          startOpacities[index] +
+          (targetOpacity - startOpacities[index]) * eased;
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(animateFade);
+      } else {
+        labels.forEach(label => {
+          label.material.opacity = targetOpacity;
+        });
+
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(animateFade);
+  });
+}
+
+function updateFaceNumber(numberLabel, number) {
+  if (numberLabel.userData.displayedNumber === number) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+
+  const context = canvas.getContext('2d');
+  context.font = '50px Arial';
+  context.fillStyle = '#b8c3ce';
+  context.textAlign = 'left';
+  context.textBaseline = 'top';
+  context.fillText(String(number), 8, 8);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+
+  const material = numberLabel.material;
+  const oldTexture = material.map;
+
+  material.map = texture;
+  material.needsUpdate = true;
+
+  if (oldTexture) oldTexture.dispose();
+
+  numberLabel.userData.displayedNumber = number;
+}
+
+
 
 const geometry = new THREE.BoxGeometry(
   cubeSize,
@@ -413,6 +495,8 @@ switch (face.name) {
 }
 
 const numberLabel = createFaceNumber(step + 1);
+faceMesh.userData.numberLabel = numberLabel;
+numberLabel.userData.displayedNumber = step + 1;
 
 // Small inset from the top-left corner
 
@@ -442,7 +526,21 @@ case 'bottom':
     break;
 }
 
+
 faceMesh.add(numberLabel);
+scene.updateMatrixWorld(true);
+
+const worldPosition = new THREE.Vector3();
+const worldQuaternion = new THREE.Quaternion();
+
+numberLabel.getWorldPosition(worldPosition);
+numberLabel.getWorldQuaternion(worldQuaternion);
+numberLabel.userData.cubelet = cubelet;
+
+scene.add(numberLabel);
+
+numberLabel.position.copy(worldPosition);
+numberLabel.quaternion.copy(worldQuaternion);
 }
 
 cubelet.add(edges);
@@ -573,6 +671,11 @@ function updateCubelet(cubelet) {
         step = z + x * 4;
         break;
     }
+
+
+  // if (child.userData.numberLabel) {
+  //   updateFaceNumber(child.userData.numberLabel, step + 1);
+  // }
 
     const isCurrentStep = step === currentStep;
 
@@ -724,91 +827,123 @@ function resetCubeletPositions() {
   }
 }
 
+function snapCubeletRotation(cubelet) {
+  const quarterTurn = Math.PI / 2;
+
+  const snap = angle =>
+    Math.round(angle / quarterTurn) * quarterTurn;
+
+  cubelet.rotation.set(
+    snap(cubelet.rotation.x),
+    snap(cubelet.rotation.y),
+    snap(cubelet.rotation.z),
+    cubelet.rotation.order
+  );
+
+  cubelet.updateMatrix();
+}
 
 let rotatingLayer = false;
 
 
-function rotateLayer(layerY, direction =1) {
+async function rotateLayer(layerY, direction = 1) {
   if (rotatingLayer) return;
+
   resetCubeletPositions();
   rotatingLayer = true;
 
   const layer = cubelets.filter(
     cubelet => cubelet.userData.y === layerY
   );
+  
 
-  // Create a pivot at the centre of the top layer
+  // Fade the layer's numbers out BEFORE rotation begins.
+  await fadeLayerNumbers(layer, 0, 120);
+
+  // Create a pivot at the centre of the selected layer.
   const pivot = new THREE.Group();
   pivot.position.set(0, (layerY - 1.5) * spacing, 0);
   scene.add(pivot);
 
-  // Attach the cubelets while preserving their world transforms
+  // Attach the selected cubelets to the pivot.
   layer.forEach(cubelet => pivot.attach(cubelet));
 
+  // Rotate the layer over 300 ms.
   const duration = 300;
   const startTime = performance.now();
 
-  function animateRotation(now) {
-    const progress = Math.min((now - startTime) / duration, 1);
-    const eased = progress * progress * (3 - 2 * progress);
-
-    pivot.rotation.y = eased * direction * Math.PI / 2;
-
-    if (progress < 1) {
-      requestAnimationFrame(animateRotation);
-      return;
-    }
-
-    // Finish at exactly 90 degrees
-    pivot.rotation.y = direction * Math.PI / 2;
-    pivot.updateMatrixWorld(true);
-
-    // Return cubelets to the scene, preserving world transforms
-    layer.forEach(cubelet => scene.attach(cubelet));
-
-    layer.forEach(cubelet => {
-      const oldX = cubelet.userData.x;
-      const oldZ = cubelet.userData.z;
-
-      let gridX;
-      let gridZ;
-
-      if (direction === 1) {
-        gridX = oldZ;
-        gridZ = 3 - oldX;
-      } else {
-        gridX = 3 - oldZ;
-        gridZ = oldX;
-      }
-
-      cubelet.position.set(
-        (gridX - 1.5) * spacing,
-        (layerY - 1.5) * spacing,
-        (gridZ - 1.5) * spacing
+  await new Promise(resolve => {
+    function animateRotation(now) {
+      const progress = Math.min(
+        (now - startTime) / duration,
+        1
       );
 
-      cubelet.userData.x = gridX;
-      cubelet.userData.y = layerY;
-      cubelet.userData.z = gridZ;
-    });
+      // Smooth ease-in/ease-out.
+      const eased = progress * progress * (3 - 2 * progress);
 
-    scene.remove(pivot);
+      pivot.rotation.y = eased * direction * Math.PI / 2;
 
-    rotatingLayer = false;
-    updateAllCubelets();
-  }
+      if (progress < 1) {
+        requestAnimationFrame(animateRotation);
+      } else {
+        // Ensure the final rotation is exact.
+        pivot.rotation.y = direction * Math.PI / 2;
+        pivot.updateMatrixWorld(true);
+        resolve();
+      }
+    }
 
-  requestAnimationFrame(animateRotation);
+    requestAnimationFrame(animateRotation);
+  });
+
+  // Detach the cubelets while preserving their world transforms.
+  layer.forEach(cubelet => scene.attach(cubelet));
+
+  // Update grid coordinates using the existing rotation mapping.
+  layer.forEach(cubelet => {
+    const oldX = cubelet.userData.x;
+    const oldZ = cubelet.userData.z;
+
+    if (direction === 1) {
+      cubelet.userData.x = oldZ;
+      cubelet.userData.z = 3 - oldX;
+    } else {
+      cubelet.userData.x = 3 - oldZ;
+      cubelet.userData.z = oldX;
+    }
+
+    cubelet.position.set(
+      (cubelet.userData.x - 1.5) * spacing,
+      (cubelet.userData.y - 1.5) * spacing,
+      (cubelet.userData.z - 1.5) * spacing
+    );
+
+    snapCubeletRotation(cubelet);
+  });
+
+  // Remove the pivot after the cubelets have been repositioned.
+  scene.remove(pivot);
+
+  // Fade the numbers back in AFTER rotation has finished.
+  await fadeLayerNumbers(layer, 1, 120);
+
+  rotatingLayer = false;
+  updateAllCubelets();
 }
 
 
-function rotateVerticalLayer(axis, layerIndex, direction = 1) {
+async function rotateVerticalLayer(axis, layerIndex, direction = 1) {
   if (rotatingLayer) return;
+
   rotatingLayer = true;
 
   const layer = cubelets.filter(
     cubelet => cubelet.userData[axis] === layerIndex
   );
+
+  // Fade numbers out before rotation starts.
+  await fadeLayerNumbers(layer, 0, 120);
 
   const pivot = new THREE.Group();
 
@@ -850,6 +985,7 @@ function rotateVerticalLayer(axis, layerIndex, direction = 1) {
       let gridY = oldY;
       let gridZ = oldZ;
 
+      // Original coordinate mappings preserved.
       if (axis === 'x') {
         if (direction === 1) {
           gridY = 3 - oldZ;
@@ -860,11 +996,11 @@ function rotateVerticalLayer(axis, layerIndex, direction = 1) {
         }
       } else if (axis === 'z') {
         if (direction === 1) {
-          gridX = oldY;
-          gridY = 3 - oldX;
-        } else {
           gridX = 3 - oldY;
           gridY = oldX;
+        } else {
+          gridX = oldY;
+          gridY = 3 - oldX;
         }
       }
 
@@ -881,8 +1017,11 @@ function rotateVerticalLayer(axis, layerIndex, direction = 1) {
 
     scene.remove(pivot);
 
-    rotatingLayer = false;
-    updateAllCubelets();
+    // Fade numbers back in after rotation finishes.
+    fadeLayerNumbers(layer, 1, 120).then(() => {
+      rotatingLayer = false;
+      updateAllCubelets();
+    });
   }
 
   requestAnimationFrame(animateRotation);
